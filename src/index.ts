@@ -220,6 +220,7 @@ type UiState = {
   delays: DelayMap;
   switching: boolean;
   message: string;
+  lastOperationResult: string; // 记录最后操作结果
 };
 
 const color = {
@@ -243,6 +244,7 @@ const state: UiState = {
   delays: new Map(),
   switching: false,
   message: "初始化中...",
+  lastOperationResult: "",
 };
 
 let client: ClashClient | null = null;
@@ -276,7 +278,7 @@ function render(): void {
   if (state.loading) {
     process.stdout.write("加载中...\n");
   } else {
-    const maxRows = Math.max(10, process.stdout.rows - 8);
+    const maxRows = Math.max(10, process.stdout.rows - 9);
     const start = Math.max(0, Math.min(state.selectedIndex - Math.floor(maxRows / 2), Math.max(0, state.nodes.length - maxRows)));
     const end = Math.min(state.nodes.length, start + maxRows);
 
@@ -289,11 +291,18 @@ function render(): void {
       const delay = fmtDelay(state.delays.get(node));
       process.stdout.write(`${cursor}${currentMark} ${node}  ${delay}\n`);
     }
+    
+    const emptyLines = Math.max(0, maxRows - (end - start));
+    for (let i = 0; i < emptyLines; i++) {
+      process.stdout.write("\n");
+    }
   }
 
   process.stdout.write(
-    `\n${color.dim}↑/↓:选择  Enter:切换  r:测速并刷新  d:切DIRECT  q:退出${color.reset}\n${state.switching ? "切换中..." : state.message}\n`,
+    `\n ${color.dim}↑(j)/↓(k):选择  Enter(l):切换  r:测速并刷新  d:DIRECT  esc(q):退出\n${color.reset} ${state.switching ? "切换中..." : state.message}`
   );
+  
+  process.stdout.write("\x1b[0J");
 }
 
 async function refreshData(withDelayTest: boolean): Promise<void> {
@@ -357,13 +366,16 @@ async function refreshData(withDelayTest: boolean): Promise<void> {
 
     state.delays = delays;
     state.loading = false;
-    state.message = withDelayTest
+    const resultMsg = withDelayTest
       ? `已刷新 ${state.nodes.length} 个选项并完成测速`
       : `已加载 ${state.nodes.length} 个选项（未测速，按 r 开始）`;
+    state.message = resultMsg;
+    state.lastOperationResult = resultMsg; // 记录操作结果
   } catch (err) {
     state.loading = false;
     state.error = err instanceof Error ? err.message : String(err);
     state.message = "刷新失败";
+    state.lastOperationResult = `刷新失败: ${state.error}`; // 记录错误结果
   } finally {
     inFlightRefresh = false;
     render();
@@ -383,10 +395,13 @@ async function switchTo(nodeName: string): Promise<void> {
   try {
     await api.selectNode(state.selectorName, nodeName);
     state.selectorCurrent = nodeName;
-    state.message = `已切换到 ${nodeName}`;
+    const resultMsg = `已切换到 ${nodeName}`;
+    state.message = resultMsg;
+    state.lastOperationResult = resultMsg; // 记录切换成功结果
   } catch (err) {
     state.error = err instanceof Error ? err.message : String(err);
     state.message = "切换失败";
+    state.lastOperationResult = `切换失败: ${state.error}`; // 记录切换失败结果
   } finally {
     state.switching = false;
     inFlightSwitch = false;
@@ -400,24 +415,28 @@ function setupInput(): void {
   process.stdin.setEncoding("utf8");
 
   process.stdin.on("data", (key: string) => {
-    if (key === "\u0003" || key === "q") {
+    // ESC 退出 (\u001b 是 ESC 字符)
+    if (key === "\u001b" || key === "\u0003" || key === "q") {
       cleanupAndExit(0);
       return;
     }
 
-    if (key === "\u001b[A") {
+    // 向上：↑ 或 k (Vim 风格)
+    if (key === "\u001b[A" || key === "k") {
       state.selectedIndex = Math.max(0, state.selectedIndex - 1);
       render();
       return;
     }
 
-    if (key === "\u001b[B") {
+    // 向下：↓ 或 j (Vim 风格)
+    if (key === "\u001b[B" || key === "j") {
       state.selectedIndex = Math.min(state.nodes.length - 1, state.selectedIndex + 1);
       render();
       return;
     }
 
-    if (key === "\r") {
+    // 选中：Enter 或 l (Vim 风格)
+    if (key === "\r" || key === "l") {
       const node = state.nodes[state.selectedIndex];
       if (node) {
         void switchTo(node);
@@ -437,11 +456,22 @@ function setupInput(): void {
 }
 
 function cleanupAndExit(code: number): void {
+  // 恢复终端状态
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(false);
   }
   process.stdin.pause();
-  process.stdout.write("\n");
+
+  // 退出备用屏幕，恢复到之前的终端状态
+  process.stdout.write("\x1b[?1049l");
+  // 显示光标
+  process.stdout.write("\x1b[?25h");
+
+  // 打印最后操作结果
+  if (state.lastOperationResult) {
+    process.stdout.write(`${state.lastOperationResult}\n`);
+  }
+
   process.exit(code);
 }
 
@@ -494,6 +524,11 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // 进入备用屏幕
+  process.stdout.write("\x1b[?1049h");
+  // 隐藏光标
+  process.stdout.write("\x1b[?25l");
+
   const opts = parseCliOptions();
   setupInput();
   state.message = "检测控制器连接...";
@@ -503,10 +538,14 @@ async function main(): Promise<void> {
     client = detected.client;
     state.controller = detected.label;
     state.message = "连接成功";
+    state.lastOperationResult = `成功连接到 ${detected.label}`;
   } catch (err) {
     state.error = err instanceof Error ? err.message : String(err);
     state.message = "连接失败";
+    state.lastOperationResult = `连接失败: ${state.error}`;
     render();
+    // 延迟退出，让用户看到错误信息
+    setTimeout(() => cleanupAndExit(1), 2000);
     return;
   }
 

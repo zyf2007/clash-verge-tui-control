@@ -1,6 +1,6 @@
 {
   "name": "clash-verge-tui-control",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "一个 TypeScript 终端 TUI，用于方便在只有 ssh 或 TTY 的情况下控制桌面端 Clash Verge Rev 切换节点。",
   "bin": {
     "clashtui": "./bin/clashtui.js"

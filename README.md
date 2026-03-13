@@ -36,21 +36,28 @@ secret: your-secret
 ```bash
 CLASH_BASE_URL=http://127.0.0.1:9090 CLASH_SECRET=your-secret npm run dev
 ```
+## 构建
+
+```bash
+npm run build
+```
 
 ## 安装与运行
 
 ```bash
 npm i -g clash-verge-tui-control
+```
+```bash
 clashtui
 ```
 
 ## 按键
 
-- `↑ / ↓`：选择节点
+- `↑(j) / ↓(k)`：选择节点
 - `Enter`：切换到选中节点
 - `r`：刷新节点并测速（启动时默认不测速）
 - `d`：切换到 `DIRECT`
-- `q`：退出
+- `esc(q)`：退出
 
 ## 环境变量
 
