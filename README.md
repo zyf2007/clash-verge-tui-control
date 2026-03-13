@@ -1,6 +1,14 @@
-# Clash Verge CLI Control (TUI)
+# Clash Verge TUI Control
 
-一个 TypeScript 终端 TUI，用于：
+一个 TypeScript 终端 TUI，用于方便你只有 ssh 或 TTY 的情况下控制桌面端 Clash Verge Rev 切换节点。
+
+> 本程序不是基于 Mihomo 的 TUI 客户端，而是用于在你已经安装了其他 Mihomo GUI 的情况下提供多一种应急控制方式。  
+
+
+![运行效果](example.jpg)
+
+
+支持以下功能：
 
 - 查看策略组可选节点
 - 显示每个节点的延迟
@@ -16,7 +24,7 @@
 
 ## Clash Verge Rev 设置
 
-要让本程序跨平台工作，建议开启 HTTP 控制器（external-controller），例如：
+如果要开启 HTTP 控制器（external-controller），需要配置：
 
 ```yaml
 external-controller: 127.0.0.1:9090
@@ -32,21 +40,7 @@ CLASH_BASE_URL=http://127.0.0.1:9090 CLASH_SECRET=your-secret npm run dev
 ## 安装与运行
 
 ```bash
-npm install
-npm run dev
-```
-
-全局安装后直接运行：
-
-```bash
-npm i -g .
-clashtui
-```
-
-也可以全局安装已发布包（发布后）：
-
-```bash
-npm i -g clash-verge-cli-control
+npm i -g clash-verge-tui-control
 clashtui
 ```
 
