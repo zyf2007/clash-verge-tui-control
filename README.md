@@ -5,7 +5,7 @@
 > 本程序不是基于 Mihomo 的 TUI 客户端，而是用于在你已经安装了其他 Mihomo GUI 的情况下提供多一种应急控制方式。  
 
 
-![运行效果](example.jpg)
+![运行效果](https://github.com/zyf2007/clash-verge-tui-control/blob/main/example.jpg)
 
 
 支持以下功能：
