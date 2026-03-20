@@ -216,11 +216,9 @@ type UiState = {
   controller: string;
   viewMode: ViewMode;
 
-  // 策略组选择页
   selectorList: string[];
   selectorIndex: number;
 
-  // 节点页
   selectorName: string | null;
   selectorCurrent: string | null;
   nodeIndex: number;
@@ -443,14 +441,15 @@ function setupInput() {
   process.stdin.resume();
   process.stdin.setEncoding("utf8");
 
-  process.stdin.on("data", (key) => {
+  process.stdin.on("data", (chunk) => {
+    const key = String(chunk);
+
     if (key === "\u001b" || key === "\u0003" || key === "q") {
       cleanupAndExit(0);
       return;
     }
 
     if (state.viewMode === "selector") {
-      // 策略组选择页
       if (key === "\u001b[A" || key === "k") {
         state.selectorIndex = Math.max(0, state.selectorIndex - 1);
         render();
@@ -464,13 +463,13 @@ function setupInput() {
       return;
     }
 
-    // 节点页
     if (key === "b") {
       state.viewMode = "selector";
       state.error = null;
       render();
       return;
     }
+
     if (key === "\u001b[A" || key === "k") {
       state.nodeIndex = Math.max(0, state.nodeIndex - 1);
       render();
