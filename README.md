@@ -10,6 +10,7 @@
 
 支持以下功能：
 
+- 查看可用的策略组
 - 查看策略组可选节点
 - 显示每个节点的延迟
 - 切换节点
@@ -20,7 +21,6 @@
 默认使用 `auto` 自动发现：
 - 先尝试 Unix Socket：`/tmp/verge/verge-mihomo.sock`
 - 失败后再尝试 HTTP：`http://127.0.0.1:9090`
-- 默认策略组：`🚀 节点选择`
 
 ## Clash Verge Rev 设置
 
@@ -64,7 +64,6 @@ clashtui
 - `CLASH_UNIX_SOCKET`：Unix Socket 路径（默认 `/tmp/verge/verge-mihomo.sock`）
 - `CLASH_BASE_URL`：HTTP 控制器地址（默认 `http://127.0.0.1:9090`）
 - `CLASH_SECRET`：如果设置了 API secret，填这里
-- `CLASH_SELECTOR`：策略组名称（默认 `🚀 节点选择`）
 - `CLASH_TEST_URL`：测速 URL（默认 `https://www.gstatic.com/generate_204`）
 - `CLASH_TIMEOUT_MS`：测速超时毫秒（默认 `5000`）
 - `CLASH_CONCURRENCY`：并发测速数量（默认 `8`）
